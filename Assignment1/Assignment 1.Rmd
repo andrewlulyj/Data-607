@@ -1,0 +1,37 @@
+---
+title: "Assignment1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Load data and rename column name 
+```{r load}
+url <-'https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data'
+data <- read.table(url,sep = ',')
+names(data) <- c('classes','cap-shape','cap-surface','cap-color','bruises','odor','gill-attachment','gill-spacing','gill-size','gill-color','stalk-shape','stalk-root','stalk-surface-above-ring','stalk-surface-below-ring','stalk-color-above-ring','stalk-color-below-ring','veil-type','veil-color','ring-number','ring-type','spore-print-color','population','habitat')
+head(data)
+```
+
+## Subseting data with classes, cap-shape, cap-color and bruises
+```{r subset}
+subdata <- data[,c(1,2,4,5)]
+head(subdata)
+```
+
+## Convert abbreviation to full name
+```{r convert}
+subdata$classes <- sapply(subdata$classes,function(x){if (x == 'p') 'poisonous' else 'edible'})
+subdata[,2] <- sapply(subdata[,2],function(x){if (x == 'x') 'convex' else if (x == 'b') 'bell' else if (x=='c') 'conical' else if (x == 'f') 'flat' else if (x=='k') 'knobbed' else 'sunken'})
+subdata[,3] <- sapply(subdata[,3],function(x){if (x == 'n') 'brown' else if (x == 'b') 'buff' else if (x=='c') 'cinnamon' else if (x == 'g') 'gray' else if (x=='r') 'green' else if (x=='p') 'pink' else if (x=='u') 'purple'
+  else if (x=='e') 'red'else if (x=='w') 'white'  else 'yellow'})
+subdata$bruises <- sapply(subdata$bruises,function(x){if (x == 't') 'true' else 'false'})
+subdata
+```
+## Categorical data study
+```{r plot}
+mosaicplot(table(subdata$classes,subdata$bruises),main = 'classes-bruises')
+```
