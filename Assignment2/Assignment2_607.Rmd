@@ -1,0 +1,31 @@
+---
+title: "Assignment 2 607"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load RMysql 
+since I am using mysql to store data, I use the Rmysql package 
+```{r load library}
+install.packages("RMySQL")
+```
+```{R}
+library(RMySQL)
+```
+
+## Create DB Connection
+```{R connection}
+con <- dbConnect(MySQL(), 
+user='root', password='con0firm', dbname='movie', host='localhost')
+dbListTables(con)
+```
+## Read data into R data frame
+```{r read data}
+sql <- "select * from movie"
+res <- dbGetQuery(con, sql)
+df <- data.frame(res)
+df
+```
