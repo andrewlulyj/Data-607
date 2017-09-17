@@ -1,0 +1,42 @@
+---
+title: "607 Assignment 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(stringr) 
+ raw.data <- "555-1239Moe Szyslak(636) 555-0113Burns, C. Montgomery555 -6542Rev. Timothy Lovejoy555 8904Ned Flanders636-555-3226Simpson, Homer5553642Dr. Julius Hibbert"
+name<-unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}"))
+first_last <- str_replace_all(unlist(str_extract_all(raw.data, "[[:alpha:]., ]{2,}")),"[:alpha:]{1,}\\. |,","")
+has_title <- str_detect(name,"[:alpha:]{2,}\\.")
+has_second_name <- str_detect(str_replace_all(name, "Dr.|Rev.",''),"[:alpha:]\\.")
+first_last
+has_title
+has_second_name
+```
+
+## 4
+1 a number string with at least one number and followed by \$, example str_extract_all("a10\$1", "[0-9]+\\\\$") will return 10\$
+
+2 match a word with length from 1 to 4 which is not part of long word, example str_extract_all("aaaaa,bb", "\\\\b[a-z]{1,4}\\\\b") will return bb only
+
+3 match anyting end with .txt,  example  assignment.txt
+
+4 match the following format 2 degits/2 degits/4degits, example 10/21/1991
+
+5 match < followed by any number of . followed by > followed by any number of . followed by </ and followed by same number of . as the first . sequence, example <..>..</.. 
+
+## 9
+```{r}
+text <- 'clocopCow1zmstc0d87wnkig70vdicpNuggvhryn92Gjuwczi8hgrfpRxs5Aj5dwpn0Tanwo
+Uwisdij7Lj8kpf03AT5Idr3coc0bt7yczjatOaootj55t3Nj3ne6c4sfek.r1w1YwwojigO
+d6vrfUrbz2.2bkAnbhzgv4R9i05zEcrop.wAgnb.SqoU65fPa1otfb7wEm24k6t3sR9zqe5
+fy89n6Nd5t9kc4fE905gmc4Rgxo5nhDk!gr'
+a<-unlist(str_extract_all(text, "[A-Z.]+"))
+new_text <-paste(a, collapse = '')
+gsub("\\."," ",new_text)
+```
