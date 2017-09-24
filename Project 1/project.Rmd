@@ -1,0 +1,80 @@
+---
+title: "Project 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load data and create data frame 
+```{r}
+library(stringr)
+data <- "data.txt"
+lines <- readLines(data)
+index <- !(1:length(lines)   %in% seq(1,length(lines),3) )
+lines <- lines[index]
+table <- data.frame()
+for (i in 1:length(lines))
+{ 
+ line<-unlist(str_extract_all(lines[i], "[a-zA-Z0-9->:/(). ]{1,}\\|"))
+ line<-str_replace_all(line,"\\|",'')
+ 
+ line<-as.vector(line)
+ if (i>1)
+ {row<-t(as.data.frame(line))
+ table<-rbind(table,row)
+ }
+ else
+ {head <- line}
+}
+rownames(table) <- c()
+names(table) <- head
+```
+## Create data frame with name,state,number of total points and pre rating
+```{r}
+name <-c()
+state <-c()
+pre_rating <- c()
+total_points <-c()
+average_pre_class_rating<-c()
+for (i in seq(2,dim(table)[1],2))
+{
+  n<-unlist(str_extract_all(table[i,2],"[A-Z]{1,} [A-Z]{1,}"))[1]
+  name <-c(name,n)
+  state <- c(state,as.character(table[i+1,1]))
+  pre_rating <-c(pre_rating,unlist(str_extract_all(table[i+1,2], '[0-9]+'))[2])
+  total_points <-c(total_points,as.numeric(as.character(table[i,3])))
+}
+newtable<-data.frame(name,state,total_points,pre_rating)
+```
+## Add average pre rating of opponents
+```{r}
+for (i in seq(2,dim(table)[1],2))
+{
+  sum <- 0
+  count <- 0
+  for (j in 4:10)
+  {
+  competetor <- as.numeric(str_extract_all(table[i,j],"[0-9]+")) 
+  if (! is.na(competetor))
+    {
+      sum<-sum+as.numeric(pre_rating[competetor])
+      count <- count+1
+    }
+  }
+  avg <- sum/count
+  avg<-as.integer(avg)
+  average_pre_class_rating<-c(average_pre_class_rating,avg) 
+}
+finaltable <- cbind(newtable,data.frame(average_pre_class_rating))
+names(finaltable)<- c("Player's Name","Player's State","Total Number of Points","Player's Pre-Rating","Average Pre Chess Rating of Opponents")
+```
+
+## Output to CSV
+```{r}
+write.csv(finaltable,"output.csv",row.names=FALSE )
+f<-read.csv("output.csv",sep = ',')
+names(f)<-c("Player's Name","Player's State","Total Number of Points","Player's Pre-Rating","Average Pre Chess Rating of Opponents")
+f
+```
