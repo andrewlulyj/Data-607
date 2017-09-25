@@ -1,0 +1,59 @@
+---
+title: "Assignment5"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+## Invoke libraty
+```{r cars}
+library(tidyr)
+library(dplyr)
+```
+
+## Compare on time to delay ratio of two flights
+```{r}
+table<-read.csv('flight.csv',sep=',')
+table<-tbl_df(table)
+gather(table,To,n,3:7) %>%
+group_by(From,Status)%>%
+summarise(Total =sum(n))%>%
+spread(Status,Total)%>%
+data.frame()%>%
+mutate(ratio=round((on.time/delayed)))
+```
+## Mean and SD of delay and on time of two flights
+```{r}
+gather(table,To,n,3:7)%>%
+group_by(From,Status)%>%
+summarise(mean=mean(n),sd= sd(n))
+```
+
+
+## Top delay and on time city for both flight
+```{r}
+gather(table,To,n,3:7)%>%
+group_by(From,Status)%>%
+summarise(n=max(n))%>% 
+arrange(desc(Status),desc(n) )%>%
+inner_join(gather(table,To,n,3:7),by=c('From','Status','n'))%>%
+select(From,To,Status,n)%>%
+arrange(desc(Status),desc(n))
+```
+
+# On time difference for each city 
+```{r}
+gather(table,To,n,3:7)%>%
+filter(Status=='on time' )%>%
+arrange(From)%>%
+spread(From,n)%>%
+mutate(difference = abs(Alaska-Amwest))%>%
+select(Alaska,Amwest,difference,To)%>%
+arrange(difference)
+```
+
