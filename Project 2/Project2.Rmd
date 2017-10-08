@@ -1,0 +1,199 @@
+---
+title: "Project2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warnings = FALSE)
+```
+ 
+```{r}
+library("tidyr")
+library("dplyr")
+library("ggplot2")
+```
+
+The first data set is shark attacks, it list the attack happened in different conntry and different location from 1543 to 2017.For each case it include what type of activities the person was doing during attack, person's gender,age and what kind of injury the person end up with as well as fatalness of the injury.
+
+The question we are trying to ansewr are the folowing:
+1 in last two years, which location in each country has most case(highest frequency location)
+2 in last two years what activities cause most fatal injury case in each country(most dangerous activities) 
+3 in each country, what's the percentage Of fatal injury case belong to female 
+
+## Highest frequency location by country within last two years
+```{r}
+table<- read.csv('attacks.csv',sep=',',header=TRUE)
+View(table)
+```
+```{r}
+tbl_df(table)%>%
+mutate_if(is.factor,as.character)%>%
+select(Case.Number,Date,Year,Country,Location,Activity,Sex,Age,Injury,Fatal..Y.N.)%>%
+filter(Location!='',Country!='')%>%
+group_by(Year,Country,Location)%>%
+summarise(n=n())%>%
+mutate(r=row_number(desc(n)))%>%
+filter(r==1,Year==2016||Year==2017 )%>%
+arrange(desc(Year),desc(n))%>%
+select(-r)
+```
+
+From the result, we see that in most country there is only one case in each location, however Melbourne Beachm,USA has 3 cases in 2017 and New Smyrna Beach,USA has 13 cases in 2016. So people should be careful when spending holiday in these two place.
+
+## Most dangerous activity by country within last two years
+```{r}
+tbl_df(table)%>%
+mutate_if(is.factor,as.character)%>%
+select(Case.Number,Date,Year,Country,Location,Activity,Sex,Age,Injury,Fatal..Y.N.)%>%
+filter(Year==2016| Year==2017)%>%
+group_by(Year,Country,Activity)%>%
+summarise(n=n())%>%
+mutate(r=row_number(desc(n)))%>%
+filter(r==1)%>%
+arrange(desc(Year),desc(n))%>%
+select(-r)
+```
+
+Sufing seems to be the most dangerous activities in a lot of countries especally in USA and AUSTRALIA, and Swimming also case some fatal injury cases in mutiple countries 
+
+## Percentage Of female in fatal injury by conutry
+```{r}
+tbl_df(table)%>%
+mutate_if(is.factor,as.character)%>%
+select(Case.Number,Date,Year,Country,Sex,Fatal..Y.N.)%>%
+filter(Fatal..Y.N.=='Y',Country!='',Sex !='')%>%
+group_by(Country,Sex)%>%
+summarise(n=n())%>%
+spread(Sex,n)%>%
+replace(is.na(.),0)%>%
+mutate(PercentageOfFemale=round((F/(F+M))*100))%>%
+select(-.)%>%
+arrange(desc(PercentageOfFemale))
+```
+
+In general, Male has more chance to get fatal injury than female, maybe it's because male tend to do more dangerous activities, however in CROATIA, male and female both have 7 cases.  
+
+
+The second dataset list the number of people use different drugs in the past 12 months in different age group and the number of times a user in an age group used alcohol in the past 12 month
+
+We want to know two things 
+1 what durg does a user use most in each age group 
+2 what is the most widely used drug in each age group
+
+
+```{r}
+table<-read.csv("drug.csv",head=TRUE,sep=',')
+View(table)
+```
+
+## Most frequently used drug by age
+```{r}
+tbl_df(table)%>%
+gather(drug,frequency,contains("frequency"))%>%
+mutate(drug=sub(".frequency",'',drug))%>%
+arrange(age)%>%
+group_by(age)%>%
+mutate(r=row_number(desc(frequency)))%>%
+filter(r==1)%>%
+select(age,drug,frequency)
+```
+
+From the result we find some serious problems, first of all for those 12 years old children who use hallucinogen, they really used a lot in past 12 months,although only 2% of children within the age grou use hallucinogen. So those children really need to supervised by their parents. What even worse is that some yong adult from 22 to 25 years old take heroin a lot and look back to the oringal table there are relative high proportion of yong adult use heroin within these age group. 
+in the table blew, we also find that easch yong adult in age group 22-23 and 24-25 are not only use heroin a lot, but also the proportion of heroin user are highest across all age groups. So we really should educate yong people more about how dangerous heroin is.      
+
+
+```{r}
+tbl_df(table)%>%
+select(age,heroin.use)%>%
+arrange(desc(heroin.use))
+```
+
+## Most widely used drug by age
+```{r}
+tbl_df(table)%>%
+gather(drug,usecase,contains("use"))%>%
+mutate(drug=sub(".use",'',drug))%>%
+select(age,drug,n,usecase)%>%
+mutate(number_of_people=n*(usecase/100))%>%
+mutate(number_of_people=round(number_of_people))%>%
+group_by(age)%>%
+mutate(r=row_number(desc(number_of_people)))%>%
+filter(r==1)%>%
+select(age,drug,number_of_people)
+```
+
+From the table above, we can see that alcohol are the most widely used drug regradless the age, which is expected, however what interesting is that, according to the law, people with age under 16 can not drink outside, which means some parents is not doing good job on alcohol regulation at home. Also it's surprising that people start to drink at 12.
+
+## Top 5 drugs in each age group, including tie
+```{r}
+tbl_df(table)%>%
+gather(drug,usecase,contains("use"))%>%
+mutate(drug=sub(".use",'',drug))%>%
+select(age,drug,n,usecase)%>%
+mutate(number_of_people=n*(usecase/100))%>%
+mutate(number_of_people=round(number_of_people))%>%
+group_by(age)%>%
+top_n(5,number_of_people)%>%
+select(age,drug,number_of_people)%>%
+arrange(age,desc(number_of_people))
+```
+
+It's interesting that pain releiver ranked very top accross all age group and seems like we all have pain problems, in addition,marijuana is also mentioned accross all age group which is also a pain releiver
+
+
+The dataset contain marriage rate for different group of people from 1960 to 2012
+group include different education level like high school, some college, undergraduate, and gradute. It also include different race and so on.
+The question we want to know is the trend of marriage rate for different education level.
+
+
+## Marriage rate trend by education level 
+```{r}
+table <- read.csv('marriage_rate.csv', sep =',')
+View(table)
+```
+```{r}
+tbl_df(table)%>%
+select(year,all_2534,HS_2534,SC_2534,BAp_2534,BAo_2534,GD_2534)%>%
+replace(is.na(.),0)%>%
+mutate(all_change=((all_2534-lag(all_2534))/lag(all_2534))*100,
+HS_change=((HS_2534-lag(HS_2534))/lag(HS_2534))*100,
+SC_change=((SC_2534-lag(SC_2534))/lag(SC_2534))*100,
+BAp_change=((BAp_2534-lag(BAp_2534))/lag(BAp_2534))*100,
+BAo_change=((BAo_2534-lag(BAo_2534))/lag(BAo_2534))*100,
+GD_change=((GD_2534-lag(GD_2534))/lag(GD_2534))*100)%>%
+replace(is.na(.),0)%>%
+mutate(all_change=round(all_change,digits=2),
+HS_change=round(HS_change,digits=2),
+SC_change=round(SC_change,digits=2),
+BAp_change=round(BAp_change,digits=2),
+BAo_change=round(BAo_change,digits=2),
+GD_change=round(GD_change,digits=2))%>%
+select(year,all_2534,all_change,HS_2534,HS_change,SC_2534,SC_change,BAp_2534,BAp_change,BAo_2534,BAo_change,GD_2534,GD_change)
+```
+## Visualization 
+```{r}
+tbl_df(table)%>%
+select(year,all_2534,HS_2534,SC_2534,BAp_2534,BAo_2534,GD_2534)%>%
+replace(is.na(.),0)%>%
+mutate(all_change=((all_2534-lag(all_2534))/lag(all_2534))*100,
+HS_change=((HS_2534-lag(HS_2534))/lag(HS_2534))*100,
+SC_change=((SC_2534-lag(SC_2534))/lag(SC_2534))*100,
+BAp_change=((BAp_2534-lag(BAp_2534))/lag(BAp_2534))*100,
+BAo_change=((BAo_2534-lag(BAo_2534))/lag(BAo_2534))*100,
+GD_change=((GD_2534-lag(GD_2534))/lag(GD_2534))*100)%>%
+replace(is.na(.),0)%>%
+mutate(all_change=round(all_change,digits=2),
+HS_change=round(HS_change,digits=2),
+SC_change=round(SC_change,digits=2),
+BAp_change=round(BAp_change,digits=2),
+BAo_change=round(BAo_change,digits=2),
+GD_change=round(GD_change,digits=2))%>%
+select(year,all_2534,all_change,HS_2534,HS_change,SC_2534,SC_change,BAp_2534,BAp_change,BAo_2534,BAo_change,GD_2534,GD_change)%>%
+ggplot( aes(x=year)) + geom_line(aes(y = HS_change, colour = "High School"))+ geom_line(aes(y = SC_change, colour = "Some College"))+
+geom_line(aes(y = BAo_change, colour = "Bachelor"))+
+geom_line(aes(y = GD_change, colour = "Graduate"))
+```
+
+marriage rate peaked at 1990 for people with graduate and high school education
+while it peaked at 1980 for people with bachelor and some college education.
+after 2000 all marriage rate decsrease. In addition, since 2000, people with higher education seems has lower marriage rate growth.
