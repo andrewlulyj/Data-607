@@ -1,0 +1,40 @@
+---
+title: "Assignment6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## XML
+```{r}
+library(XML)
+book<-xmlParse("book.xml")
+root <- xmlRoot(book)
+(book <- xmlToDataFrame(root))
+```
+## Json
+```{r}
+library(RJSONIO)
+if (isValidJSON("book.json"))
+   book<- fromJSON("book.json", nullValue = NA,
+simplify = FALSE )
+   book.df <- lapply(book, list,stringsAsFactors = FALSE)
+  
+author<-c(unlist(book.df[[1]][[1]]$author),unlist(book.df[[2]][[1]]$author),unlist(book.df[[3]][[1]]$author))
+title<-c(unlist(book.df[[1]][[1]]$title),unlist(book.df[[2]][[1]]$title),unlist(book.df[[3]][[1]]$title))
+award<-c(unlist(book.df[[1]][[1]]$award),unlist(book.df[[2]][[1]]$award),unlist(book.df[[3]][[1]]$award))
+link<-c(unlist(book.df[[1]][[1]]$link),unlist(book.df[[2]][[1]]$link),unlist(book.df[[3]][[1]]$link))
+author[3]<-paste(author[3],";",author[4])
+author<-author[1:3]
+data.frame(title,author,award,link)
+```
+## HTML
+```{r}
+table <-  readHTMLTable("book.html",which = 1)
+table
+```
+
+All three data frames have similar format 
+
