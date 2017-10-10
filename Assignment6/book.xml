@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<catalog>
+   <book id="1">
+      <author>Michael, Lewis</author>
+      <title>Flash Boys: A Wall Street Revolt</title>
+      <link>http://michaellewiswrites.com/index.html#flash-boys</link>
+      <award>Financial Times and McKinsey Business Book of the Year Nominee for Longlist (2014)</award>
+   </book>
+   <book id="2">
+      <author>Scott, Patterson</author>
+      <title>The Quants</title>
+      <link>https://www.goodreads.com/book/show/7495395-the-quants</link>
+      <award>#71 in Kindle Store</award> 
+   </book>
+   <book id="3">
+      <author>Benjamin, Graham ; Jason, Zweig</author>
+      <title>The Intelligent Investor</title>
+      <link>https://www.amazon.com/Best-Sellers-Books-Finance/zgbs/books/2604</link>
+      <award>#1 in Best Sellers in Finance</award>
+   </book>
+</catalog>
