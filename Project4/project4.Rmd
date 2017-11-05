@@ -1,0 +1,95 @@
+---
+title: "Project4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tm)
+library(stringr)
+library(RTextTools)
+```
+
+
+
+## create txt corpus for ham and spam according to the book
+```{r}
+spam_dir <- "C:/Users/xb645tb/Downloads/spam"
+spam <- list.files(spam_dir)
+tmp <- readLines(stringr::str_c(spam_dir,'/', spam[1]))
+tmp <- str_c(tmp, collapse = "")
+txt_corpus <- VCorpus(VectorSource(tmp))
+meta(txt_corpus[[1]], "classification") <- "spam"
+
+
+n <- 1
+for (i in 2:length(spam)) {
+  tmp <- readLines(stringr::str_c(spam_dir,'/', spam[i]))
+  tmp <- str_c(tmp, collapse = "")
+  tmp_corpus <- VCorpus(VectorSource(tmp))
+  txt_corpus <- c(txt_corpus, tmp_corpus) 
+  n <- n + 1
+  meta(txt_corpus[[n]], "classification") <- "spam"
+}
+
+ham_dir <- "C:/Users/xb645tb/Downloads/easy_ham"
+ham <- list.files(ham_dir)
+
+for (i in 1:length(ham)) {
+  tmp <- readLines(stringr::str_c(ham_dir,'/', ham[i]))
+  tmp <- str_c(tmp, collapse = "")
+  n <- n + 1
+  tmp_corpus <- VCorpus(VectorSource(tmp))
+  txt_corpus <- c(txt_corpus, tmp_corpus)
+  meta(txt_corpus[[n]], "classification") <- "ham"
+}
+
+
+txt_corpus <- sample(txt_corpus)
+txt_corpus
+```
+
+## clean document and create docuemnt term matricx according to the book
+```{r}
+temp <- tm_map(txt_corpus, content_transformer(removePunctuation))
+temp <- tm_map(temp, content_transformer(removeNumbers))
+temp <- tm_map(temp, content_transformer(stripWhitespace))
+temp <- tm_map(temp, content_transformer(tolower))
+temp <- tm_map(temp, content_transformer(removePunctuation))
+temp <- tm_map(temp, removeWords, words = stopwords("en"))
+
+
+dtm <- TermDocumentMatrix(temp)
+dtm <- removeSparseTerms(dtm, 1-(10/length(temp)))
+dtm
+```
+
+
+## list leabel and create container according to the book
+```{r}
+class <- as.vector(unlist(meta(temp, type = "local", tag = "classification")))
+meta_data <- data.frame(type = unlist(class))
+head(class, 10)
+container <- create_container(dtm,labels = class,
+                              trainSize = 1:3051,
+                              virgin = FALSE)
+
+slotNames(container)
+```
+
+## Train data with decsion tree model
+```{R}
+tree = train_model(container, "TREE")
+treeOut = classify_model(container, tree)
+
+head(treeOut)
+head(class)
+```
+Accourding to the result we can see that the fist of predication is correct with porbablity grater than 0.5
+
+
+
+
