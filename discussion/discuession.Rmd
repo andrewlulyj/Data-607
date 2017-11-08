@@ -1,0 +1,12 @@
+---
+title: "Week11 Discussion"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Linkedin Job Search System
+Linkedin in one of the most popular job search tools and usually after people search job a couple of time, linkedin will send notices such as we find 10 jobs you may interested.
+The target user for the system is all job seekers and the system can better help users to find ideal jobs. unlike other notice, this one is actually a recommended system based on the user behavior. After reverse engineering, I found it is most likely a item to item collaborative filter which means the recommended job is based on jobs that user applied. The system uses job title, location and industry as its selected features since most recommended jobs will have similiar titles as what the user has applied and it does a good job to match the job in the same industry. However, there are two things that the recommend engine could add. First of all, I find that although the recommend system will suggest job in the same industry and similar function, it does not do any filter in job levels. So especially for entry level job seekers, they may find it the system not useful because it will recommend senior and mid level job to them. Fortunately, each job post on linkedin has a job level, so the system can add that feature into the metrics so that it can find job within same level. In addtion, linkedin has a tracking system to track who applied a specific job, and users will be able to see a competency analysis if they buy the premium. Thus linkedin should have enough information to implement a  cluster model to recommend job based on jobs that are applied by other users. This could be a better system because most people apply same job tend to have same career interest and skill set.    
