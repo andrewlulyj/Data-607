@@ -1,0 +1,158 @@
+---
+title: "FinalProject"
+author: "Yijian Lu"
+date: "December 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(party)
+library(RMySQL)
+library(maps)
+```
+
+## Load Loan Stat Data
+```{r}
+lq1<-read.csv('C:/Users/andre/Downloads/LoanStats_2017Q1.csv/LoanStats_2017Q1.csv')
+lq2<-read.csv('C:/Users/andre/Downloads/LoanStats_2017Q1.csv/LoanStats_2017Q2.csv')
+lq3<-read.csv('C:/Users/andre/Downloads/LoanStats_2017Q1.csv/LoanStats_2017Q3.csv')
+head(lq2)
+```
+
+
+
+## Exploratory Analysis 
+```{r}
+summary(lq1)
+```
+id and member id has no value, so we will clean the data by removing them   
+
+## Laon Amount by Grade
+```{r}
+data<-rbind(lq1,lq2,lq3)%>%
+select(-id,-member_id)
+p<-ggplot(data, aes(grade, loan_amnt))
+p+geom_boxplot()+ ggtitle("Loan Amount by Grade")
+```
+## Interest Rate by Grade
+```{r}
+data<-data%>%
+mutate(int_rate=as.numeric(gsub("%", "", int_rate)))  
+p<-ggplot(data, aes(grade, int_rate))
+p+geom_boxplot()+ ggtitle("Interest Rate by Grade")
+```
+According to both boxplot I can tell the higher the grade, the higher the interest rate and loan amount,
+so I want to see what features determeine the grade except the loan amount and interest rate, so that i can see what grade I will get.I will use decision tree to model the relationship 
+
+## Group Data
+since the decision tree is only for myself, so I will not need to have so many different catregories, so
+I will group the data to fit my case. 
+```{r}
+data<-data%>%
+mutate(purpose=as.factor(if_else(purpose=='car','car','other')))%>%
+mutate(home_ownership=as.factor(if_else(home_ownership=='RENT','RENT','OTHER')))%>%
+mutate(loan_range=as.factor(if_else(loan_amnt<=20000,'<=20000','>20000')))
+
+```
+
+## Split data into 75% training and 25% test
+```{r}
+smp_size <- floor(0.75 * nrow(data))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(data)), size = smp_size)
+train <- data[train_ind, ]
+test <- data[-train_ind, ]
+```
+
+
+## Build Tree
+```{r  fig.width = 10, fig.asp = .62}
+tree <- ctree(
+grade ~purpose+ home_ownership+loan_range , data=train)
+dev.new(width=10, height=10)
+plot(tree)
+```
+![Caption for the picture.](C:/Users/andre/Pictures/tree.PNG)
+
+## Test
+```{r}
+tr.pred = predict(tree, newdata=test, type="response")
+test%>%
+mutate(pred=tr.pred)%>%
+mutate(acc=pred!=grade)%>%
+group_by(acc)%>%
+summarise(count=n()) 
+```
+
+## My Interest Rate Confidence Interval 
+```{r}
+c<-data%>%
+filter(grade=='C')
+hist(c$int_rate)
+c(mean(c$int_rate)-1.96*sd(c$int_rate),mean(c$int_rate)+1.96*sd(c$int_rate))
+```
+
+## Load Reject Data from MySQL
+```{r include=FALSE}
+con <- dbConnect(MySQL(), 
+user='root', dbname='landingclub', host='localhost')
+dbListTables(con)
+sql <- "select * from rejectstat"
+res <- dbGetQuery(con, sql)
+reject <- data.frame(res)
+```
+## Exploratory Analysis
+```{r}
+summary(reject)
+unique(reject$Loan_Title)
+unique(reject$Policy_Code)
+```
+
+## Load Reject Data from MySQL
+```{r include=FALSE}
+con <- dbConnect(MySQL(), 
+user='root', dbname='landingclub', host='localhost')
+dbListTables(con)
+sql <- "select * from rejectstat"
+res <- dbGetQuery(con, sql)
+reject <- data.frame(res)
+```
+## Exploratory Analysis
+```{r}
+summary(reject)
+unique(reject$Loan_Title)
+unique(reject$Policy_Code)
+```
+
+As we can see the top reject loan type is debt consolidation which is understandable, car is the 5th most rejected loan type but it's not that much in terms of total population 
+
+
+## Reject Count by Employment Length
+```{r}
+p<-ggplot(reject, aes(x=Employment_Length )) + geom_bar()
+p+theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+According to the histgram, people with less than 1 year's work experience are most likely to be rejected, in my case, I only worked for two years, and the number of rejection compare to total number of rejection is very small.
+
+## Frequency Map by Reject Count
+```{r}
+heat_map<-reject%>%
+group_by(State) %>%
+summarise(count=n())
+
+states <- map_data("state")
+s<-data.frame(tolower(state.name) ,state.abb)
+names(s)<-c('full','State')
+heat_map<-merge(x = heat_map, y = s, by = "State", all.x = TRUE)
+names(heat_map)<-c('abb','count','region')
+sim_data_geo <- merge(states, heat_map, by="region",all.x = TRUE)
+qplot(long, lat, data=sim_data_geo, geom="polygon", fill=count, group=group)
+```
+
+It's obervious that west coast has much more reject case than other place, and I am going to buy a car in california,
+so there may be some risk for me.
